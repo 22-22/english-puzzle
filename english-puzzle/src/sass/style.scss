@@ -1,0 +1,81 @@
+$colorBg: whitesmoke;
+$colorFont: rgb(39, 34, 34);
+$colorIncorrect: rgb(209, 18, 18);
+$colorCorrect: green;
+
+@mixin flex() {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+body {
+    background-color: $colorBg;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    // height: 100vh;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    h1 {
+        font-size: 72px;
+        margin: 0;
+    }
+}
+
+.none {
+    display: none;;
+}
+
+.main {
+    @include flex();
+    flex-direction: column;
+}
+
+.word-block {
+    border: 1px solid rgb(43, 39, 39);
+    padding: 3px;
+    min-width: 70px;
+    min-height: 30px;
+    flex-grow: 1;
+}
+
+.results {
+    width: 80vw;
+    border: 1px solid navy;
+}
+
+.guess__word-block {
+    max-width: 120px;
+}
+
+.sentence-result {
+    @include flex();
+    width: inherit;
+}
+
+.sentence-curr {
+    @include flex();
+    margin-top: 50px;
+    width: 80vw;
+}
+
+.btn-container {
+    @include flex();
+}
+
+.btn {
+    margin: 50px 10px 0 0;
+    cursor: pointer;
+    &:last-child {
+        margin-right: 0;
+    }
+}
+
+.correct {
+    color: $colorCorrect;
+}
+
+.incorrect {
+    color: $colorIncorrect;
+}
