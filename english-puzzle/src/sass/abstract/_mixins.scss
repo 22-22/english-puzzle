@@ -1,0 +1,16 @@
+@mixin flex($justify-content: center) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: $justify-content;
+}
+
+@mixin font ($size, $weight: normal, $style: normal) {
+    font-size: $size;
+    font-style: $style;
+    font-weight: $weight;
+}
+
+@mixin transition {
+    transition: all .3s ease-out;
+}

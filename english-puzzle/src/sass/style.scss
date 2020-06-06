@@ -1,31 +1,79 @@
-$colorBg: whitesmoke;
-$colorFont: rgb(39, 34, 34);
-$colorIncorrect: rgb(209, 18, 18);
-$colorCorrect: green;
+@import "abstract/constants";
+@import "abstract/mixins";
+@import "base/buttons";
 
-@mixin flex() {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
+* {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+  
+html {
+    font-size: 10px;
 }
 
 body {
     background-color: $colorBg;
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
-    // height: 100vh;
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
+    @include font($size: 1.6rem);
     h1 {
-        font-size: 72px;
-        margin: 0;
+        @include font($size: 5rem, $weight: bold);
+        text-transform: uppercase;
+        letter-spacing: 10px;
     }
 }
 
-.none {
-    display: none;;
+.start {
+    position: absolute;
+    background-image: url("../assets/start.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    width: 100vw;
+    height: 100vh;
+    @include flex();
+    flex-direction: column;
+    z-index: 2;
+    @include transition;
+    .start__info {
+        margin: 40px auto;
+        text-align: center;
+    }
 }
+
+.start__info {
+    @include font($size: 2rem);
+}
+
+.none {
+    display: none;
+}
+
+.header {
+    @include flex($justify-content: space-between);
+    height: 10vh;
+    margin: 0 20px;
+}
+
+input {
+    width: 50px;
+}
+
+.hints {
+    @include flex();
+}
+
+.hints__word-icon {
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    right: 8px;
+    top: 7px;
+    cursor: pointer;
+    transform: scale(0.8);
+    opacity: 0.7;
+    @include transition;
+  }
 
 .main {
     @include flex();
@@ -34,19 +82,20 @@ body {
 
 .word-block {
     border: 1px solid rgb(43, 39, 39);
-    padding: 3px;
+    padding: 5px;
     min-width: 70px;
-    min-height: 30px;
+    min-height: 40px;
+    text-align: center;
     flex-grow: 1;
-}
-
-.results {
-    width: 80vw;
-    border: 1px solid navy;
 }
 
 .guess__word-block {
     max-width: 120px;
+}
+
+.results {
+    width: 80vw;
+    height: 60vh;
 }
 
 .sentence-result {
@@ -56,20 +105,12 @@ body {
 
 .sentence-curr {
     @include flex();
-    margin-top: 50px;
+    margin: 50px 0;
     width: 80vw;
 }
 
 .btn-container {
     @include flex();
-}
-
-.btn {
-    margin: 50px 10px 0 0;
-    cursor: pointer;
-    &:last-child {
-        margin-right: 0;
-    }
 }
 
 .correct {

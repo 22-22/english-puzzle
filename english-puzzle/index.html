@@ -8,10 +8,29 @@
 </head>
 
 <body>
+    <div class="start">
+        <h1>english puzzle</h1>
+        <p class="start__info">Click on words, collect phrases.<br>
+            Select tooltips in the menu.</p>
+        <button class="btn start__btn">start</button>
+    </div>
     <header class="header">
-        <button class="btn sound-btn">Sound</button>
+        <form class="form" action="" method="GET">
+            <input class="form__level" type="text" autocomplete="off" placeholder="level">
+            <input class="form__round" type="text" autocomplete="off" placeholder="round">
+            <button class="btn form__btn">go!</button>
+        </form>
+        <div class="hints">
+            <button class="btn hints__sentence">S</button>
+            <button class="btn hints__translation">T</button>
+            <button class="btn hints__word">
+                <img src="./src/assets/sound.png" class="hints__word-icon" alt="sound"></img>
+            </button>
+            <button class="btn hints__image">I</button>
+        </div>
     </header>
     <main class="main">
+        <div class="translation"></div>
         <div class="results">
         </div>
         <div class="sentence-curr"></div>
