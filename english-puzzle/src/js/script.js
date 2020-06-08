@@ -4,9 +4,8 @@
 // round odd (1) => 2nd half
 
 const baseUrl = 'https://afternoon-falls-25894.herokuapp.com';
-const translationKey = 'trnsl.1.1.20200322T155651Z.de98a60e6a99185e.089aea4237b51c6db082c966f27a7895cd1e8b44';
 
-const sentCurr = document.querySelector('.sentence-curr');
+const sentToGuess = document.querySelector('.sentence-to-guess');
 const checkBtn = document.querySelector('.check-btn');
 const continueBtn = document.querySelector('.continue-btn');
 const dontKnowBtn = document.querySelector('.dont-know-btn');
@@ -15,19 +14,26 @@ const wordAudioBtn = document.querySelector('.hints__word');
 const sentenceAudioBtn = document.querySelector('.hints__sentence');
 const translationBtn = document.querySelector('.hints__translation');
 const startBtn = document.querySelector('.start__btn')
-const results = document.querySelector('.results');
+const resultsBtn = document.querySelector('.results-btn')
+const results = document.querySelector('.results-sentences');
 const form = document.querySelector('.inputs');
 
+let wordIdx;
+
 // a new game obj is create once a new game starts,
-// sentIdx idx is updated every time a Continue btn is clicked
+// sentCurr idx is updated every time a Continue btn is clicked
 class Game {
-  constructor(sentIdx) {
-    this.sentIdx = sentIdx;
+  constructor(sentCurr, round, group) {
+    this.sentCurr = sentCurr;
+    this.round = round;
+    this.group = group;
+    this.correctGuess = [];
+    this.dontKnow = [];
   }
   // methods if needed
 }
 
-const game = new Game(0);
+let game = new Game(0, 1, 1);
 
 const countPage = (round) => Math.ceil((round / 2) - 1);
 
@@ -38,14 +44,6 @@ const getData = async (page, group) => {
   const data = await response.json();
   return data;
 };
-
-const getTranslation = async () => {
-  const text = game.dataForGame[game.sentIdx].textExample;
-  const url = `https://translate.yandex.net/api/v1.5/tr.json/translate?key=${translationKey}&text=${text}&lang=en-ru`
-  const response = await fetch(url);
-  const data = await response.json();
-  return data.text;
-}
 
 const splitData = (round, data) => {
   const dataForGame = data.filter((obj, idx, arr) => {
@@ -69,8 +67,8 @@ function createEmptyBlocks(num) {
 }
 
 const displayData = () => {
-  sentCurr.innerHTML = '';
-  const sent = game.dataForGame[game.sentIdx].textExample;
+  sentToGuess.innerHTML = '';
+  const sent = game.dataForGame[game.sentCurr].textExample;
   const sentArr = sent.split(' ');
   createEmptyBlocks(sentArr.length);
   const fragment = document.createDocumentFragment();
@@ -81,78 +79,148 @@ const displayData = () => {
     wordBlock.innerHTML = word;
     fragment.append(wordBlock);
   });
-  sentCurr.append(fragment);
+  sentToGuess.append(fragment);
 };
 
 const startNewGame = async (round, group) => {
+  results.innerHTML = '';
+
+  // document.querySelector('.success-number').textContent = '';
+  // document.querySelector('.errors-number').textContent = '';
+  // document.querySelector('.success-items').innerHTML = '';
+  // document.querySelector('.error-items').innerHTML = '';
+
+  document.querySelector('.form__round').value = round;
+  document.querySelector('.form__level').value = group;
+
+  resultsBtn.classList.add('none');
+  continueBtn.classList.add('none');
+  dontKnowBtn.classList.remove('none');
+
   const page = countPage(round);
   const data = await getData(page, group);
+  splitData(round, data);
   const dataForGame = splitData(round, data);
   game.dataForGame = dataForGame;
   displayData();
 };
 
-const showTranslation = async () => {
-  const data = await getTranslation();
-  document.querySelector('.translation').innerHTML = data;
+const showTranslation = () => {
+  const translation = game.dataForGame[game.sentCurr].textExampleTranslate
+  document.querySelector('.translation').innerHTML = translation;
 }
 
 const sayWord = () => {
-  const sentenceAudioPath = game.dataForGame[game.sentIdx].audioExample;
+  const sentenceAudioPath = game.dataForGame[game.sentCurr].audio;
   const audio = new Audio(`https://raw.githubusercontent.com/22-22/rslang/rslang-data/data/${sentenceAudioPath}`);
   audio.play();
 };
 
 const saySentence = () => {
-  const wordAudioBtnPath = game.dataForGame[game.sentIdx].audio;
+  const wordAudioBtnPath = game.dataForGame[game.sentCurr].audioExample;
   const audio = new Audio(`https://raw.githubusercontent.com/22-22/rslang/rslang-data/data/${wordAudioBtnPath}`);
   audio.play();
 };
 
-let wordIdx = 0;
 function guessWordOrder(e) {
-  const sentResultCurr = results.children[game.sentIdx];
+  const sentResultCurr = results.children[game.sentCurr];
   sentResultCurr.querySelectorAll('.results__word-block')[wordIdx].innerHTML = e.target.closest('.guess__word-block').innerHTML;
   e.target.closest('.guess__word-block').remove();
   wordIdx += 1;
-  if (sentCurr.children.length === 0) {
+  if (sentToGuess.children.length === 0) {
     checkBtn.classList.remove('none');
     dontKnowBtn.classList.add('none');
   }
 }
 
-function checkSentence() {
-  const sentArr = game.dataForGame[game.sentIdx].textExample.split(' ');
-  const sentResultCurr = results.children[game.sentIdx];
+function checkIfGuessedCorrectly(correctWords, sentArr) {
+  if (correctWords === sentArr.length) {
+    checkBtn.classList.add('none');
+    continueBtn.classList.remove('none');
+    game.correctGuess.push(game.dataForGame[game.sentCurr].textExample);
+  } else {
+    dontKnowBtn.classList.remove('none');
+  }
+}
+
+function compareSentences() {
+  let correctWords = 0;
+  const sentArr = game.dataForGame[game.sentCurr].textExample.split(' ');
+  const sentResultCurr = results.children[game.sentCurr];
   sentResultCurr.querySelectorAll('.results__word-block').forEach((word, idx) => {
     if (sentArr[idx] === word.innerHTML) {
       word.classList.add('correct');
-      checkBtn.classList.add('none');
-      continueBtn.classList.remove('none');
+      correctWords += 1;
     } else {
       word.classList.add('incorrect');
-      dontKnowBtn.classList.remove('none');
     }
   });
+  checkIfGuessedCorrectly(correctWords, sentArr);
 }
 
 function showCorrectSentence() {
-  const sentArr = game.dataForGame[game.sentIdx].textExample.split(' ');
-  const sentResultCurr = results.children[game.sentIdx];
+  const sentArr = game.dataForGame[game.sentCurr].textExample.split(' ');
+  const sentResultCurr = results.children[game.sentCurr];
   sentResultCurr.querySelectorAll('.results__word-block').forEach((word, idx) => {
     word.innerHTML = sentArr[idx];
   });
   checkBtn.classList.add('none');
   dontKnowBtn.classList.add('none');
+  continueBtn.classList.remove('none');
+
+  sentResultCurr.querySelectorAll('.results__word-block').forEach((word) => {
+ 
+   // word.style.backgroundImage = "url('../../dist/675d47af046d986aede8b97f7bfa87a8.jpg') ";
+  })
+}
+
+function createResultsBlock(sent) {
+  const sentBlock = document.createElement('div');
+  sentBlock.classList.add('item');
+  sentBlock.insertAdjacentHTML('beforeend', '<div class="item--icon"></div>');
+  const sentEl = document.createElement('div');
+  sentEl.classList.add('item--sent');
+  sentEl.innerHTML = sent;
+  sentBlock.append(sentEl);
+  return sentBlock;
+}
+
+const showResults = () => {
+  game.correctGuess.forEach((sent) => {
+    const sentBlock = createResultsBlock(sent)
+    document.querySelector('.success-items').append(sentBlock);
+  })
+  let successNumber = game.correctGuess.length;
+  document.querySelector('.success-number').textContent = successNumber;
+  game.dontKnow.forEach((sent) => {
+    const sentBlock = createResultsBlock(sent)
+    document.querySelector('.error-items').append(sentBlock);
+  })
+  let errorsNumber = game.dontKnow.length;
+  document.querySelector('.errors-number').textContent = errorsNumber;
 }
 
 // continue
 continueBtn.addEventListener('click', () => {
-  game.sentIdx += 1;
-  wordIdx = 0;
-  displayData();
-  // if (results.children.length === 10) ...
-
+  if (results.children.length !== 10) {
+    continueBtn.classList.add('none');
+    dontKnowBtn.classList.remove('none');
+    game.sentCurr += 1;
+    wordIdx = 0;
+    displayData();
+  } else if (resultsBtn.classList.contains('none')) {
+    // show picture
+    resultsBtn.classList.remove('none');
+  } else {
+    if (game.round < 60) {
+      let round = parseInt(game.round, 10) + 1;
+      let group = game.group;
+      game = new Game(0, round, group);
+      startNewGame(round, group);
+    } else {
+      console.log('change level')
+    }
+  }
 });
 
 wordAudioBtn.addEventListener('click', sayWord);
@@ -161,16 +229,20 @@ sentenceAudioBtn.addEventListener('click', saySentence);
 
 translationBtn.addEventListener('click', showTranslation);
 
-sentCurr.addEventListener('click', guessWordOrder);
+sentToGuess.addEventListener('click', guessWordOrder);
 
-checkBtn.addEventListener('click', checkSentence);
+checkBtn.addEventListener('click', compareSentences);
 
-dontKnowBtn.addEventListener('click', showCorrectSentence);
+dontKnowBtn.addEventListener('click', () => {
+  showCorrectSentence();
+  game.dontKnow.push(game.dataForGame[game.sentCurr].textExample);
+});
 
 formBtn.addEventListener('click', (e) => {
   e.preventDefault();
   let round = document.querySelector('.form__round').value;
   let group = document.querySelector('.form__level').value;
+  game = new Game(0, round, group);
   startNewGame(round, group);
 })
 
@@ -178,7 +250,25 @@ startBtn.addEventListener('click', () => {
   document.querySelector('.start').classList.add('none');
 })
 
-window.addEventListener('DOMContentLoaded', startNewGame(1, 1));
+resultsBtn.addEventListener('click', () => {
+  document.querySelector('.results').classList.remove('none');
+  showResults();
+  document.querySelectorAll('.item--icon').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      game.dataForGame.forEach((el) => {
+        if (el.textExample === e.target.nextSibling.innerHTML) {
+          const audio = new Audio(`https://raw.githubusercontent.com/22-22/rslang/rslang-data/data/${el.audioExample}`);
+          audio.play();
+        }
+      })
+    });
+  })
+})
+
+window.addEventListener('DOMContentLoaded', () => {
+  wordIdx = 0;
+  startNewGame(1, 1);
+});
 
 
 // TO-DO

@@ -9,7 +9,6 @@
     box-sizing: border-box;
 }
 
-  
 html {
     font-size: 10px;
 }
@@ -66,14 +65,14 @@ input {
 .hints__word-icon {
     width: 30px;
     height: 30px;
-    position: absolute;
+    // position: absolute;
     right: 8px;
     top: 7px;
     cursor: pointer;
     transform: scale(0.8);
     opacity: 0.7;
     @include transition;
-  }
+}
 
 .main {
     @include flex();
@@ -93,7 +92,7 @@ input {
     max-width: 120px;
 }
 
-.results {
+.results-sentences {
     width: 80vw;
     height: 60vh;
 }
@@ -103,7 +102,7 @@ input {
     width: inherit;
 }
 
-.sentence-curr {
+.sentence-to-guess {
     @include flex();
     margin: 50px 0;
     width: 80vw;
@@ -119,4 +118,103 @@ input {
 
 .incorrect {
     color: $colorIncorrect;
+}
+
+/*****************STATS*******************/
+
+.results {
+    position: absolute;
+    background-image: url("../assets/start.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    width: 100vw;
+    height: 100vh;
+    @include transition;
+    padding: 10px;
+    text-align: center;
+}
+
+.results-container {
+    @include flex();
+    flex-direction: column;
+    width: 100%;
+    max-width: 810px;
+    padding: 40px;
+    background-color: white;
+    border-radius: 10px;
+}
+
+.results__word-block {
+    background-position: center;
+    background-size: cover;
+}
+
+.errors {
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+.errors-number {
+    background-color: tomato;
+    color: white;
+    border-radius: 30%;
+    padding: 0 10px;
+    margin-left: 5px;
+}
+
+.success {
+    margin: 10px 0;
+    font-size: 24px;
+}
+
+.success-number {
+    background-color: seagreen;
+    color: white;
+    border-radius: 30%;
+    padding: 0 10px;
+    margin-left: 5px;
+}
+
+.results-container .item {
+    flex-direction: row;
+    border: 0;
+    background-color: white;
+    margin: 0;
+    box-shadow: none;
+    padding: 0 0 0 50px;
+}
+
+.success-items {
+    margin-bottom: 10px;
+}
+
+.item {
+    border: 1px solid rgb(231, 255, 17);
+    border-radius: 25%;
+    @include flex();
+    flex-direction: column;
+    padding: 10px 0;
+    min-width: 200px;
+    margin: 10px;
+    cursor: pointer;
+    background-color: rgb(226, 251, 255);
+    box-shadow: 12px -4px 5px 1px rgba(0, 0, 255, 0.2);
+}
+
+.item:hover {
+    transform: scale(1.05);
+    transition: 0.2s linear;
+}
+
+.item--icon {
+    width: 34px;
+    height: 34px;
+    background-image: url("../assets/audioTranslation.png");
+    background-size: contain;
+    margin-bottom: 5px;
+}
+
+.results-container .item .item--icon,
+.results-container .item .item--sent,
+.results-container .item .item--transcript {
+    margin-right: 15px;
 }

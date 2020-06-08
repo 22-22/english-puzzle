@@ -21,9 +21,9 @@
             <button class="btn form__btn">go!</button>
         </form>
         <div class="hints">
-            <button class="btn hints__sentence">S</button>
+            <button class="btn hints__word">W</button>
             <button class="btn hints__translation">T</button>
-            <button class="btn hints__word">
+            <button class="btn hints__sentence">
                 <img src="./src/assets/sound.png" class="hints__word-icon" alt="sound"></img>
             </button>
             <button class="btn hints__image">I</button>
@@ -31,13 +31,32 @@
     </header>
     <main class="main">
         <div class="translation"></div>
-        <div class="results">
+        <div class="results-sentences">
         </div>
-        <div class="sentence-curr"></div>
+        <div class="sentence-to-guess"></div>
         <div class="btn-container">
             <button class="btn continue-btn none">Continue</button>
             <button class="btn check-btn none">Check</button>
             <button class="btn dont-know-btn">I don't know</button>
+            <button class="btn results-btn none">Results</button>
+        </div>
+        <div class="results none">
+            <div class="results-container">
+                <p class="errors">I don't know
+                    <span class="errors-number"></span>
+                </p>
+                <div class="error-items">
+                </div>
+                <p class="success">I know
+                    <span class="success-number"></span>
+                </p>
+                <div class="success-items">
+                </div>
+                <div class="results--btns">
+                    <a href="#" class="btn continue-btn">Continue</a>
+                    <a href="#" class="btn stats-btn">Statistics</a>
+                </div>
+            </div>
         </div>
     </main>
 </body>
