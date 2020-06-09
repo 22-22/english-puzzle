@@ -14,3 +14,10 @@
 @mixin transition {
     transition: all .3s ease-out;
 }
+
+@mixin stats-counter {
+    color: $colorBtnFont;
+    border-radius: 20%;
+    padding: 7px;
+    margin-left: 5px;
+}

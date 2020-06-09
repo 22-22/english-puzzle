@@ -15,12 +15,23 @@ html {
 
 body {
     background-color: $colorBg;
+    color: $colorFont;
     @include font($size: 1.6rem);
     h1 {
         @include font($size: 5rem, $weight: bold);
         text-transform: uppercase;
         letter-spacing: 10px;
     }
+}
+
+.inactive {
+    opacity: 0.5;
+}
+
+.final-image {
+    background-image: url(../assets/picture.png);
+    background-position: center;
+    background-size: cover;
 }
 
 .start {
@@ -62,15 +73,18 @@ input {
     @include flex();
 }
 
-.hints__word-icon {
+.hints .btn {
+    padding: 5px;
+    &:hover {
+        transform: scale(1.2);
+    }
+}
+
+.hints__icon {
     width: 30px;
     height: 30px;
-    // position: absolute;
-    right: 8px;
-    top: 7px;
-    cursor: pointer;
-    transform: scale(0.8);
     opacity: 0.7;
+    background-size: cover;
     @include transition;
 }
 
@@ -79,33 +93,47 @@ input {
     flex-direction: column;
 }
 
+.translation {
+    margin-bottom: 5px;
+    min-height: 20px;
+}
+
 .word-block {
     border: 1px solid rgb(43, 39, 39);
     padding: 5px;
     min-width: 70px;
-    min-height: 40px;
+    height: 88px;
     text-align: center;
     flex-grow: 1;
+    @include flex();
 }
 
 .guess__word-block {
     max-width: 120px;
+    height: 33px;
 }
 
 .results-sentences {
-    width: 80vw;
-    height: 60vh;
+    // width: 80vw;
+    width: 1000px;
+    min-height: 70vh;
+    margin-bottom: 10px;
 }
 
-.sentence-result {
+.result-sentence {
     @include flex();
     width: inherit;
 }
 
+.results__word-block {
+    @include font($size: 2.5rem);
+}
+
 .sentence-to-guess {
     @include flex();
-    margin: 50px 0;
-    width: 80vw;
+    margin-bottom: 10px;
+    width: 1000px;
+    // width: 80vw;
 }
 
 .btn-container {
@@ -124,6 +152,7 @@ input {
 
 .results {
     position: absolute;
+    top: 0;
     background-image: url("../assets/start.jpg");
     background-repeat: no-repeat;
     background-size: cover;
@@ -139,26 +168,22 @@ input {
     flex-direction: column;
     width: 100%;
     max-width: 810px;
-    padding: 40px;
+    padding: 20px 0;
     background-color: white;
     border-radius: 10px;
+    margin: auto;
+    // transform: translate(0, 10%);
 }
 
-.results__word-block {
-    background-position: center;
-    background-size: cover;
+.picture-mini {
+    width: 120px;
+    height: 90px;
+    margin-bottom: 10px;
 }
 
 .errors {
-    margin-bottom: 10px;
+    margin: 10px 0;
     font-size: 24px;
-}
-.errors-number {
-    background-color: tomato;
-    color: white;
-    border-radius: 30%;
-    padding: 0 10px;
-    margin-left: 5px;
 }
 
 .success {
@@ -166,21 +191,14 @@ input {
     font-size: 24px;
 }
 
-.success-number {
-    background-color: seagreen;
-    color: white;
-    border-radius: 30%;
-    padding: 0 10px;
-    margin-left: 5px;
+.errors-number {
+    background-color: $colorIncorrect;
+    @include stats-counter();
 }
 
-.results-container .item {
-    flex-direction: row;
-    border: 0;
-    background-color: white;
-    margin: 0;
-    box-shadow: none;
-    padding: 0 0 0 50px;
+.success-number {
+    background-color: $colorCorrect;
+    @include stats-counter();
 }
 
 .success-items {
@@ -188,33 +206,17 @@ input {
 }
 
 .item {
-    border: 1px solid rgb(231, 255, 17);
-    border-radius: 25%;
     @include flex();
-    flex-direction: column;
-    padding: 10px 0;
     min-width: 200px;
-    margin: 10px;
-    cursor: pointer;
-    background-color: rgb(226, 251, 255);
-    box-shadow: 12px -4px 5px 1px rgba(0, 0, 255, 0.2);
-}
-
-.item:hover {
-    transform: scale(1.05);
-    transition: 0.2s linear;
+    background-color: white;
+    margin: 0;
 }
 
 .item--icon {
     width: 34px;
     height: 34px;
     background-image: url("../assets/audioTranslation.png");
-    background-size: contain;
-    margin-bottom: 5px;
-}
-
-.results-container .item .item--icon,
-.results-container .item .item--sent,
-.results-container .item .item--transcript {
-    margin-right: 15px;
+    background-size: cover;
+    margin: 0 15px 5px 0;
+    cursor: pointer;
 }
