@@ -8,17 +8,17 @@ const baseUrl = 'https://afternoon-falls-25894.herokuapp.com';
 const sentToGuess = document.querySelector('.sentence-to-guess');
 const checkBtn = document.querySelector('.check-btn');
 const continueBtn = document.querySelector('.continue-btn');
+const continueAfterResults = document.querySelector('.results-continue-btn');
 const dontKnowBtn = document.querySelector('.dont-know-btn');
 const formBtn = document.querySelector('.form__btn');
 const wordAudioBtn = document.querySelector('.hints__word');
 const sentenceAudioBtn = document.querySelector('.hints__sentence');
 const translationBtn = document.querySelector('.hints__translation');
-const startBtn = document.querySelector('.start__btn')
-const resultsBtn = document.querySelector('.results-btn')
+const imageBtn = document.querySelector('.hints__image');
+const startBtn = document.querySelector('.start__btn');
+const resultsBtn = document.querySelector('.results-btn');
 const results = document.querySelector('.results-sentences');
 const form = document.querySelector('.inputs');
-
-let wordIdx;
 
 // a new game obj is create once a new game starts,
 // sentCurr idx is updated every time a Continue btn is clicked
@@ -39,28 +39,19 @@ const countPage = (round) => Math.ceil((round / 2) - 1);
 
 const getData = async (page, group) => {
   const path = '/words';
-  const url = `${baseUrl}${path}?page=${page}&group=${group}`;
+  const url = `${baseUrl}${path}?page=${page}&group=${group}&wordsPerExampleSentenceLTE=10&wordsPerPage=10`;
   const response = await fetch(url);
   const data = await response.json();
   return data;
 };
 
-const splitData = (round, data) => {
-  const dataForGame = data.filter((obj, idx, arr) => {
-    if (round % 2 === 0) {
-      return idx < arr.length / 2;
-    }
-    return idx >= arr.length / 2;
-  });
-  return dataForGame;
-};
-
 function createEmptyBlocks(num) {
   const sentResultNew = document.createElement('div');
-  sentResultNew.classList.add('sentence-result');
+  sentResultNew.classList.add('result-sentence');
   for (let i = 0; i < num; i += 1) {
     const wordBlock = document.createElement('span');
     wordBlock.className = 'word-block results__word-block';
+    wordBlock.setAttribute('draggable', 'true');
     sentResultNew.append(wordBlock);
   }
   results.append(sentResultNew);
@@ -68,6 +59,8 @@ function createEmptyBlocks(num) {
 
 const displayData = () => {
   sentToGuess.innerHTML = '';
+  document.querySelector('.translation').innerHTML = '';
+
   const sent = game.dataForGame[game.sentCurr].textExample;
   const sentArr = sent.split(' ');
   createEmptyBlocks(sentArr.length);
@@ -76,6 +69,7 @@ const displayData = () => {
   sentArr.forEach((word) => {
     const wordBlock = document.createElement('span');
     wordBlock.className = 'word-block guess__word-block';
+    wordBlock.setAttribute('draggable', 'true');
     wordBlock.innerHTML = word;
     fragment.append(wordBlock);
   });
@@ -83,12 +77,8 @@ const displayData = () => {
 };
 
 const startNewGame = async (round, group) => {
-  results.innerHTML = '';
-
-  // document.querySelector('.success-number').textContent = '';
-  // document.querySelector('.errors-number').textContent = '';
-  // document.querySelector('.success-items').innerHTML = '';
-  // document.querySelector('.error-items').innerHTML = '';
+  document.querySelector('.success-items').innerHTML = '';
+  document.querySelector('.error-items').innerHTML = '';
 
   document.querySelector('.form__round').value = round;
   document.querySelector('.form__level').value = group;
@@ -96,19 +86,18 @@ const startNewGame = async (round, group) => {
   resultsBtn.classList.add('none');
   continueBtn.classList.add('none');
   dontKnowBtn.classList.remove('none');
+  results.classList.remove('final-image');
 
   const page = countPage(round);
-  const data = await getData(page, group);
-  splitData(round, data);
-  const dataForGame = splitData(round, data);
+  const dataForGame = await getData(page, group);
   game.dataForGame = dataForGame;
   displayData();
 };
 
 const showTranslation = () => {
-  const translation = game.dataForGame[game.sentCurr].textExampleTranslate
+  const translation = game.dataForGame[game.sentCurr].textExampleTranslate;
   document.querySelector('.translation').innerHTML = translation;
-}
+};
 
 const sayWord = () => {
   const sentenceAudioPath = game.dataForGame[game.sentCurr].audio;
@@ -124,20 +113,40 @@ const saySentence = () => {
 
 function guessWordOrder(e) {
   const sentResultCurr = results.children[game.sentCurr];
-  sentResultCurr.querySelectorAll('.results__word-block')[wordIdx].innerHTML = e.target.closest('.guess__word-block').innerHTML;
-  e.target.closest('.guess__word-block').remove();
-  wordIdx += 1;
-  if (sentToGuess.children.length === 0) {
+  for (let i = 0; i < sentResultCurr.children.length; i += 1) {
+    if (!sentResultCurr.children[i].innerHTML) {
+      sentResultCurr.children[i].innerHTML = e.target.closest('.guess__word-block').innerHTML;
+      break;
+    };
+  }
+  e.target.closest('.guess__word-block').innerHTML = '';
+  if (sentToGuess.textContent === '') {
     checkBtn.classList.remove('none');
     dontKnowBtn.classList.add('none');
   }
 }
+
+const showImages = () => {
+  const sentResultCurr = results.children[game.sentCurr];
+  // const blockHeight = 50;
+  const blockHeight = 88;
+  const topVal = 0 + blockHeight * game.sentCurr;
+  let leftVal = 0;
+  sentResultCurr.querySelectorAll('.results__word-block').forEach((word) => {
+    word.style.background = "linear-gradient(rgba(255, 255, 255, 0.4) 100%, rgba(0, 0, 0, 0.3) 0%), url('../../dist/e3ff896d961f297da83349fcdd0ad8d3.png'), no-repeat";
+    word.style.backgroundPosition = `top -${topVal}px left -${leftVal}px`;
+    leftVal += word.offsetWidth;
+  });
+};
 
 function checkIfGuessedCorrectly(correctWords, sentArr) {
   if (correctWords === sentArr.length) {
     checkBtn.classList.add('none');
     continueBtn.classList.remove('none');
     game.correctGuess.push(game.dataForGame[game.sentCurr].textExample);
+    showImages();
+    showTranslation();
+    saySentence();
   } else {
     dontKnowBtn.classList.remove('none');
   }
@@ -167,11 +176,6 @@ function showCorrectSentence() {
   checkBtn.classList.add('none');
   dontKnowBtn.classList.add('none');
   continueBtn.classList.remove('none');
-
-  sentResultCurr.querySelectorAll('.results__word-block').forEach((word) => {
- 
-   // word.style.backgroundImage = "url('../../dist/675d47af046d986aede8b97f7bfa87a8.jpg') ";
-  })
 }
 
 function createResultsBlock(sent) {
@@ -187,40 +191,53 @@ function createResultsBlock(sent) {
 
 const showResults = () => {
   game.correctGuess.forEach((sent) => {
-    const sentBlock = createResultsBlock(sent)
+    const sentBlock = createResultsBlock(sent);
     document.querySelector('.success-items').append(sentBlock);
-  })
-  let successNumber = game.correctGuess.length;
+  });
+  const successNumber = game.correctGuess.length;
   document.querySelector('.success-number').textContent = successNumber;
   game.dontKnow.forEach((sent) => {
-    const sentBlock = createResultsBlock(sent)
+    const sentBlock = createResultsBlock(sent);
     document.querySelector('.error-items').append(sentBlock);
-  })
-  let errorsNumber = game.dontKnow.length;
+  });
+  const errorsNumber = game.dontKnow.length;
   document.querySelector('.errors-number').textContent = errorsNumber;
-}
+};
 
+const goToNextGame = () => {
+  if (game.round < 60) {
+    const round = parseInt(game.round, 10) + 1;
+    const { group } = game;
+    game = new Game(0, round, group);
+    startNewGame(round, group);
+  } else {
+    console.log('change level');
+  }
+};
 // continue
 continueBtn.addEventListener('click', () => {
-  if (results.children.length !== 10) {
+  if (results.children.length > 0 && results.children.length !== 10) {
     continueBtn.classList.add('none');
     dontKnowBtn.classList.remove('none');
     game.sentCurr += 1;
-    wordIdx = 0;
     displayData();
-  } else if (resultsBtn.classList.contains('none')) {
-    // show picture
-    resultsBtn.classList.remove('none');
   } else {
-    if (game.round < 60) {
-      let round = parseInt(game.round, 10) + 1;
-      let group = game.group;
-      game = new Game(0, round, group);
-      startNewGame(round, group);
+    if (resultsBtn.classList.contains('none')) {
+      resultsBtn.classList.remove('none');
+      sentToGuess.innerHTML = 'Моне Клод Оскар – Красные лодки в Аржантее, 1875.';
+      results.innerHTML = '';
+      results.classList.add('final-image');
+      document.querySelector('.translation').innerHTML = '';
     } else {
-      console.log('change level')
+      goToNextGame();
     }
   }
+});
+
+continueAfterResults.addEventListener('click', () => {
+  document.querySelector('.translation').innerHTML = '';
+  document.querySelector('.results').classList.add('none');
+  goToNextGame();
 });
 
 wordAudioBtn.addEventListener('click', sayWord);
@@ -231,42 +248,76 @@ translationBtn.addEventListener('click', showTranslation);
 
 sentToGuess.addEventListener('click', guessWordOrder);
 
+imageBtn.addEventListener('click', showImages);
+
 checkBtn.addEventListener('click', compareSentences);
 
 dontKnowBtn.addEventListener('click', () => {
   showCorrectSentence();
+  showTranslation();
+  showImages();
   game.dontKnow.push(game.dataForGame[game.sentCurr].textExample);
 });
 
 formBtn.addEventListener('click', (e) => {
   e.preventDefault();
-  let round = document.querySelector('.form__round').value;
-  let group = document.querySelector('.form__level').value;
+  const round = document.querySelector('.form__round').value;
+  const group = document.querySelector('.form__level').value;
   game = new Game(0, round, group);
   startNewGame(round, group);
-})
+});
 
 startBtn.addEventListener('click', () => {
   document.querySelector('.start').classList.add('none');
-})
+});
 
 resultsBtn.addEventListener('click', () => {
   document.querySelector('.results').classList.remove('none');
   showResults();
   document.querySelectorAll('.item--icon').forEach((el) => {
     el.addEventListener('click', (e) => {
-      game.dataForGame.forEach((el) => {
-        if (el.textExample === e.target.nextSibling.innerHTML) {
-          const audio = new Audio(`https://raw.githubusercontent.com/22-22/rslang/rslang-data/data/${el.audioExample}`);
+      game.dataForGame.forEach((item) => {
+        if (item.textExample === e.target.nextSibling.innerHTML) {
+          const audio = new Audio(`https://raw.githubusercontent.com/22-22/rslang/rslang-data/data/${item.audioExample}`);
           audio.play();
         }
-      })
+      });
     });
-  })
-})
+  });
+});
+
+// drag and drop
+function allowDrop(e) {
+  e.preventDefault();
+}
+
+function drag(e) {
+  e.dataTransfer.setData("text/plain", e.target.innerHTML);
+  e.target.innerHTML = '';
+}
+
+function drop(e) {
+  e.preventDefault();
+  let d = e.dataTransfer.getData("text/plain");
+  e.target.innerHTML = d;
+}
+
+sentToGuess.addEventListener('drop', drop);
+sentToGuess.addEventListener('dragover', allowDrop)
+sentToGuess.addEventListener('dragstart', drag);
+
+results.addEventListener('drop', (e) => {
+  drop(e);
+  if (sentToGuess.textContent === '') {
+    checkBtn.classList.remove('none');
+    dontKnowBtn.classList.add('none');
+  }
+});
+results.addEventListener('dragover', allowDrop)
+results.addEventListener('dragstart', drag);
+
 
 window.addEventListener('DOMContentLoaded', () => {
-  wordIdx = 0;
   startNewGame(1, 1);
 });
 
@@ -285,4 +336,4 @@ window.addEventListener('DOMContentLoaded', () => {
 // создать новые элементы в блоке результатов по количеству слов отгадываемого предложения
 // при клике на слово из нижнего блока оно последовательно перемещается наверх.
 
-//  let sentencesForRound = dataForGame.map((obj) => obj.textExample);
+// Винсент Ван Гог – Красные виноградники в Арле, 1888.
