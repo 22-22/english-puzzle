@@ -5,23 +5,21 @@
 
 const baseUrl = 'https://afternoon-falls-25894.herokuapp.com';
 
-const sentToGuess = document.querySelector('.sentence-to-guess');
 const checkBtn = document.querySelector('.check-btn');
 const continueBtn = document.querySelector('.continue-btn');
-const continueAfterResults = document.querySelector('.results-continue-btn');
+const continueAfterResultsBtn = document.querySelector('.results-continue-btn');
 const dontKnowBtn = document.querySelector('.dont-know-btn');
 const formBtn = document.querySelector('.form__btn');
 const wordAudioBtn = document.querySelector('.hints__word');
 const sentenceAudioBtn = document.querySelector('.hints__sentence');
 const translationBtn = document.querySelector('.hints__translation');
 const imageBtn = document.querySelector('.hints__image');
+const autoSpeechBtn = document.querySelector('.auto-speech');
 const startBtn = document.querySelector('.start__btn');
 const resultsBtn = document.querySelector('.results-btn');
 const results = document.querySelector('.results-sentences');
+const sentToGuess = document.querySelector('.sentence-to-guess');
 const form = document.querySelector('.inputs');
-
-// a new game obj is create once a new game starts,
-// sentCurr idx is updated every time a Continue btn is clicked
 class Game {
   constructor(sentCurr, round, group) {
     this.sentCurr = sentCurr;
@@ -29,8 +27,8 @@ class Game {
     this.group = group;
     this.correctGuess = [];
     this.dontKnow = [];
+    this.autoSpeech = true;
   }
-  // methods if needed
 }
 
 let game = new Game(0, 1, 1);
@@ -60,7 +58,6 @@ function createEmptyBlocks(num) {
 const displayData = () => {
   sentToGuess.innerHTML = '';
   document.querySelector('.translation').innerHTML = '';
-
   const sent = game.dataForGame[game.sentCurr].textExample;
   const sentArr = sent.split(' ');
   createEmptyBlocks(sentArr.length);
@@ -79,6 +76,7 @@ const displayData = () => {
 const startNewGame = async (round, group) => {
   document.querySelector('.success-items').innerHTML = '';
   document.querySelector('.error-items').innerHTML = '';
+  results.innerHTML = '';
 
   document.querySelector('.form__round').value = round;
   document.querySelector('.form__level').value = group;
@@ -117,7 +115,7 @@ function guessWordOrder(e) {
     if (!sentResultCurr.children[i].innerHTML) {
       sentResultCurr.children[i].innerHTML = e.target.closest('.guess__word-block').innerHTML;
       break;
-    };
+    }
   }
   e.target.closest('.guess__word-block').innerHTML = '';
   if (sentToGuess.textContent === '') {
@@ -133,7 +131,7 @@ const showImages = () => {
   const topVal = 0 + blockHeight * game.sentCurr;
   let leftVal = 0;
   sentResultCurr.querySelectorAll('.results__word-block').forEach((word) => {
-    word.style.background = "linear-gradient(rgba(255, 255, 255, 0.4) 100%, rgba(0, 0, 0, 0.3) 0%), url('../../dist/e3ff896d961f297da83349fcdd0ad8d3.png'), no-repeat";
+    word.style.background = "linear-gradient(rgba(255, 255, 255, 0.4) 100%, rgba(0, 0, 0, 0.3) 0%), url('./assets/picture.png'), no-repeat";
     word.style.backgroundPosition = `top -${topVal}px left -${leftVal}px`;
     leftVal += word.offsetWidth;
   });
@@ -144,9 +142,11 @@ function checkIfGuessedCorrectly(correctWords, sentArr) {
     checkBtn.classList.add('none');
     continueBtn.classList.remove('none');
     game.correctGuess.push(game.dataForGame[game.sentCurr].textExample);
+    if (game.autoSpeech) {
+      saySentence();
+    }
     showImages();
     showTranslation();
-    saySentence();
   } else {
     dontKnowBtn.classList.remove('none');
   }
@@ -214,41 +214,40 @@ const goToNextGame = () => {
     console.log('change level');
   }
 };
-// continue
+
+const toggleAutoSpeech = () => {
+  game.autoSpeech = !game.autoSpeech;
+  if (autoSpeechBtn.classList.contains('inactive')) {
+    autoSpeechBtn.classList.remove('inactive');
+  } else {
+    autoSpeechBtn.classList.add('inactive');
+  }
+}
+
+sentToGuess.addEventListener('click', guessWordOrder);
+
 continueBtn.addEventListener('click', () => {
   if (results.children.length > 0 && results.children.length !== 10) {
     continueBtn.classList.add('none');
     dontKnowBtn.classList.remove('none');
     game.sentCurr += 1;
     displayData();
+  } else if (resultsBtn.classList.contains('none')) {
+    resultsBtn.classList.remove('none');
+    sentToGuess.innerHTML = 'Моне Клод Оскар – Красные лодки в Аржантее, 1875.';
+    results.innerHTML = '';
+    results.classList.add('final-image');
+    document.querySelector('.translation').innerHTML = '';
   } else {
-    if (resultsBtn.classList.contains('none')) {
-      resultsBtn.classList.remove('none');
-      sentToGuess.innerHTML = 'Моне Клод Оскар – Красные лодки в Аржантее, 1875.';
-      results.innerHTML = '';
-      results.classList.add('final-image');
-      document.querySelector('.translation').innerHTML = '';
-    } else {
-      goToNextGame();
-    }
+    goToNextGame();
   }
 });
 
-continueAfterResults.addEventListener('click', () => {
+continueAfterResultsBtn.addEventListener('click', () => {
   document.querySelector('.translation').innerHTML = '';
   document.querySelector('.results').classList.add('none');
   goToNextGame();
 });
-
-wordAudioBtn.addEventListener('click', sayWord);
-
-sentenceAudioBtn.addEventListener('click', saySentence);
-
-translationBtn.addEventListener('click', showTranslation);
-
-sentToGuess.addEventListener('click', guessWordOrder);
-
-imageBtn.addEventListener('click', showImages);
 
 checkBtn.addEventListener('click', compareSentences);
 
@@ -256,15 +255,10 @@ dontKnowBtn.addEventListener('click', () => {
   showCorrectSentence();
   showTranslation();
   showImages();
+  if (game.autoSpeech) {
+    saySentence();
+  }
   game.dontKnow.push(game.dataForGame[game.sentCurr].textExample);
-});
-
-formBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  const round = document.querySelector('.form__round').value;
-  const group = document.querySelector('.form__level').value;
-  game = new Game(0, round, group);
-  startNewGame(round, group);
 });
 
 startBtn.addEventListener('click', () => {
@@ -286,26 +280,46 @@ resultsBtn.addEventListener('click', () => {
   });
 });
 
+// hints
+wordAudioBtn.addEventListener('click', sayWord);
+
+sentenceAudioBtn.addEventListener('click', saySentence);
+
+translationBtn.addEventListener('click', showTranslation);
+
+imageBtn.addEventListener('click', showImages);
+
+autoSpeechBtn.addEventListener('click', toggleAutoSpeech);
+
+formBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  const round = document.querySelector('.form__round').value;
+  const group = document.querySelector('.form__level').value;
+  game = new Game(0, round, group);
+  startNewGame(round, group);
+});
+
 // drag and drop
 function allowDrop(e) {
   e.preventDefault();
 }
 
 function drag(e) {
-  e.dataTransfer.setData("text/plain", e.target.innerHTML);
+  e.dataTransfer.setData('text/plain', e.target.innerHTML);
   e.target.innerHTML = '';
 }
 
 function drop(e) {
   e.preventDefault();
-  let d = e.dataTransfer.getData("text/plain");
+  const d = e.dataTransfer.getData('text/plain');
   e.target.innerHTML = d;
 }
 
 sentToGuess.addEventListener('drop', drop);
-sentToGuess.addEventListener('dragover', allowDrop)
+sentToGuess.addEventListener('dragover', allowDrop);
 sentToGuess.addEventListener('dragstart', drag);
 
+// FIX ME results.children[game.sentCurr]
 results.addEventListener('drop', (e) => {
   drop(e);
   if (sentToGuess.textContent === '') {
@@ -313,7 +327,7 @@ results.addEventListener('drop', (e) => {
     dontKnowBtn.classList.add('none');
   }
 });
-results.addEventListener('dragover', allowDrop)
+results.addEventListener('dragover', allowDrop);
 results.addEventListener('dragstart', drag);
 
 
