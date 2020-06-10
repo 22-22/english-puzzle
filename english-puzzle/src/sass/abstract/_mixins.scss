@@ -21,3 +21,17 @@
     padding: 7px;
     margin-left: 5px;
 }
+
+@mixin tooltip($width, $margin-left) {
+    visibility: hidden;
+    width: $width;
+    margin-left: $margin-left;
+    left: 50%;
+    background-color: rgb(92, 82, 82);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 3px 0;
+    position: absolute;
+    z-index: 1;
+}

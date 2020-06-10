@@ -22,21 +22,28 @@
         </form>
         <div class="hints">
             <button class="btn hints__sentence">
-                <img src="./src/assets/audioTranslation.png" class="hints__icon" alt="audioTranslation"></img>
+                <span class="tooltiptext">Listen to the sentence</span>
+                <img src="./src/assets/audioTranslation.png" class="icon" alt="audioTranslation"></img>
             </button>
             <button class="btn hints__translation">
-                <img src="./src/assets/translation.png" class="hints__icon" alt="translation"></img>
+                <span class="tooltiptext">Get the translation</span>
+                <img src="./src/assets/translation.png" class="icon" alt="translation"></img>
             </button>
-            <button class="btn hints__word inactive">
-                <img src="./src/assets/audioWord.png" class="hints__icon" alt="audioWord"></img>
+            <button class="btn hints__word">
+                <span class="tooltiptext">Listen to the word</span>
+                <img src="./src/assets/audioWord.png" class="icon" alt="audioWord"></img>
             </button>
-            <button class="btn hints__image inactive">
-                <img src="./src/assets/image.png" class="hints__icon" alt="image"></img>
+            <button class="btn hints__image">
+                <span class="tooltiptext">See the picture</span>
+                <img src="./src/assets/image.png" class="icon" alt="image"></img>
             </button>
         </div>
     </header>
     <main class="main">
-        <img src="./src/assets/audioTranslation.png" class="hints__icon" alt="auto-speak"></img>
+        <button class="btn auto-speech">
+            <span class="tooltiptext">Pronounces the sentence automatically when it's put in the right order</span>
+            <img src="./src/assets/audioTranslation.png" class="icon" alt="auto-speech"></img>
+        </button>
         <div class="translation"></div>
         <div class="results-sentences">
         </div>
