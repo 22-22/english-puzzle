@@ -8,6 +8,14 @@
 </head>
 
 <body>
+    <div class="login-window none">
+        <form class="login">
+            <input id="input-email" type="text" placeholder="Email" required autocomplete="off" >
+            <input id="input-password" type="password" placeholder="Password" required autocomplete="off">
+            <button class="login-btn">Log In</button>
+        </form>
+    </div>
+
     <div class="start">
         <h1>english puzzle</h1>
         <p class="start__info">Click on words, collect phrases.<br>
@@ -69,10 +77,14 @@
                 <div class="success-items">
                 </div>
                 <div class="results--btns">
-                    <button class="btn results-continue-btn">Continue</button>
+                    <button id="results-continue-btn" class="btn">Continue</button>
                     <button class="btn stats-btn">Statistics</button>
                 </div>
             </div>
+        </div>
+        <div class="stats none">
+            <div class="stats-container"></div>
+            <button id="stats-continue-btn" class="btn">Continue</button>
         </div>
     </main>
 </body>

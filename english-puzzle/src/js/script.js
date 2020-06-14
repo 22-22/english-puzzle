@@ -4,10 +4,12 @@
 // round odd (1) => 2nd half
 
 const baseUrl = 'https://afternoon-falls-25894.herokuapp.com';
+const tokenValidHours = 4;
 
 const checkBtn = document.querySelector('.check-btn');
 const continueBtn = document.querySelector('.continue-btn');
-const continueAfterResultsBtn = document.querySelector('.results-continue-btn');
+const continueAfterResultsBtn = document.querySelector('#results-continue-btn');
+const continueAfterStatsBtn = document.querySelector('#stats-continue-btn');
 const dontKnowBtn = document.querySelector('.dont-know-btn');
 const formBtn = document.querySelector('.form__btn');
 const wordAudioBtn = document.querySelector('.hints__word');
@@ -17,27 +19,29 @@ const imageBtn = document.querySelector('.hints__image');
 const autoSpeechBtn = document.querySelector('.auto-speech');
 const startBtn = document.querySelector('.start__btn');
 const resultsBtn = document.querySelector('.results-btn');
+const statsBtn = document.querySelector('.stats-btn');
+const loginBtn = document.querySelector('.login-btn');
 const results = document.querySelector('.results-sentences');
 const sentToGuess = document.querySelector('.sentence-to-guess');
 const form = document.querySelector('.inputs');
 class Game {
-  constructor(sentCurr, round, group) {
-    this.sentCurr = sentCurr;
+  constructor(round, level) {
     this.round = round;
-    this.group = group;
+    this.level = level;
+    this.sentCurr = 0;
     this.correctGuess = [];
     this.dontKnow = [];
     this.autoSpeech = true;
   }
 }
 
-let game = new Game(0, 1, 1);
+let game = new Game(0, 0);
 
-const countPage = (round) => Math.ceil((round / 2) - 1);
+const countPage = (round) => Math.ceil((round / 2));
 
-const getData = async (page, group) => {
+const getWords = async (page, level) => {
   const path = '/words';
-  const url = `${baseUrl}${path}?page=${page}&group=${group}&wordsPerExampleSentenceLTE=10&wordsPerPage=10`;
+  const url = `${baseUrl}${path}?page=${page}&group=${level}&wordsPerExampleSentenceLTE=10&wordsPerPage=10`;
   const response = await fetch(url);
   const data = await response.json();
   return data;
@@ -73,13 +77,13 @@ const displayData = () => {
   sentToGuess.append(fragment);
 };
 
-const startNewGame = async (round, group) => {
+const startNewGame = async (round, level) => {
   document.querySelector('.success-items').innerHTML = '';
   document.querySelector('.error-items').innerHTML = '';
   results.innerHTML = '';
 
-  document.querySelector('.form__round').value = round;
-  document.querySelector('.form__level').value = group;
+  document.querySelector('.form__round').value = round + 1;
+  document.querySelector('.form__level').value = level + 1;
 
   resultsBtn.classList.add('none');
   continueBtn.classList.add('none');
@@ -87,7 +91,7 @@ const startNewGame = async (round, group) => {
   results.classList.remove('final-image');
 
   const page = countPage(round);
-  const dataForGame = await getData(page, group);
+  const dataForGame = await getWords(page, level);
   game.dataForGame = dataForGame;
   displayData();
 };
@@ -157,6 +161,10 @@ function compareSentences() {
   const sentArr = game.dataForGame[game.sentCurr].textExample.split(' ');
   const sentResultCurr = results.children[game.sentCurr];
   sentResultCurr.querySelectorAll('.results__word-block').forEach((word, idx) => {
+    if (word.classList.contains('correct') || word.classList.contains('incorrect')) {
+      word.classList.remove('correct');
+      word.classList.remove('incorrect');
+    }
     if (sentArr[idx] === word.innerHTML) {
       word.classList.add('correct');
       correctWords += 1;
@@ -205,22 +213,32 @@ const showResults = () => {
 };
 
 const goToNextGame = () => {
-  if (game.round < 60) {
-    const round = parseInt(game.round, 10) + 1;
-    const { group } = game;
-    game = new Game(0, round, group);
-    startNewGame(round, group);
+  if (game.round < 50) {
+    let { level } = game;
+    let round = parseInt(game.round, 10) + 1;
+    game = new Game(round, level);
+    startNewGame(round, level);
+  } else if (game.level < 5) {
+    let level = parseInt(game.level, 10) + 1;
+    let round = 0;
+    game = new Game(round, level);
+    startNewGame(round, level);
   } else {
-    console.log('change level');
+    console.log('Please choose any level from 1 to 6 and any round from 1 to 50');
   }
 };
 
 const toggleAutoSpeech = () => {
   game.autoSpeech = !game.autoSpeech;
-  if (autoSpeechBtn.classList.contains('inactive')) {
-    autoSpeechBtn.classList.remove('inactive');
-  } else {
-    autoSpeechBtn.classList.add('inactive');
+  autoSpeechBtn.classList.toggle('inactive');
+}
+
+const checkTokenTime = () => {
+  let dateNow = new Date();
+  let tokenValidTime = new Date(localStorage.getItem('tokenValidTime'));
+  if (dateNow.getTime() > tokenValidTime.getTime()) {
+    updateToken();
+    updateTokenValidTime();
   }
 }
 
@@ -238,18 +256,70 @@ continueBtn.addEventListener('click', () => {
     results.innerHTML = '';
     results.classList.add('final-image');
     document.querySelector('.translation').innerHTML = '';
+   // checkTokenTime();
+    let stats = {
+      "optional": {}
+    };
+    stats.optional.date = new Date();
+    stats.optional.iKnow = game.correctGuess.length;
+    stats.optional.iDontKnow = game.dontKnow.length;
+    stats.optional.level = game.level;
+    stats.optional.round = game.round;
+
+    sendStatistics(stats);
   } else {
     goToNextGame();
   }
 });
 
+const getStatistics = async () => {
+  try {
+    const userId = localStorage.getItem('id');
+    const url = `${baseUrl}/users/${userId}/statistics`;
+    const token = localStorage.getItem('token');
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      },
+    })
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    console.log(err.message);
+  }
+}
+
+const renderStatistics = (data) => {
+  document.querySelector('.stats').classList.remove('none');
+  let statsInfo = document.createElement('p');
+  let humanDate = new Date(data.date).toLocaleString();
+  statsInfo.textContent
+    = `${humanDate}, level: ${data.level}, round: ${data.round} – I know: ${data.iKnow}, I don't know: ${data.iDontKnow}.`;
+  document.querySelector('.stats-container').append(statsInfo);
+}
+
+const showStatistics = () => {
+  //checkTokenTime();
+  getStatistics()
+    .then(result => renderStatistics(result.optional));
+}
+
 continueAfterResultsBtn.addEventListener('click', () => {
-  document.querySelector('.translation').innerHTML = '';
   document.querySelector('.results').classList.add('none');
   goToNextGame();
 });
 
+continueAfterStatsBtn.addEventListener('click', () => {
+  document.querySelector('.results').classList.add('none');
+  document.querySelector('.stats').classList.add('none');
+  goToNextGame();
+});
+
 checkBtn.addEventListener('click', compareSentences);
+
+statsBtn.addEventListener('click', showStatistics);
 
 dontKnowBtn.addEventListener('click', () => {
   showCorrectSentence();
@@ -291,12 +361,12 @@ imageBtn.addEventListener('click', showImages);
 
 autoSpeechBtn.addEventListener('click', toggleAutoSpeech);
 
-formBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  const round = document.querySelector('.form__round').value;
-  const group = document.querySelector('.form__level').value;
-  game = new Game(0, round, group);
-  startNewGame(round, group);
+formBtn.addEventListener('click', (event) => {
+  event.preventDefault();
+  const round = document.querySelector('.form__round').value - 1;
+  const level = document.querySelector('.form__level').value - 1;
+  game = new Game(round, level);
+  startNewGame(round, level);
 });
 
 // drag and drop
@@ -319,9 +389,10 @@ sentToGuess.addEventListener('drop', drop);
 sentToGuess.addEventListener('dragover', allowDrop);
 sentToGuess.addEventListener('dragstart', drag);
 
-// FIX ME results.children[game.sentCurr]
 results.addEventListener('drop', (e) => {
-  drop(e);
+  if (e.target.classList.contains('results__word-block')) {
+    drop(e);
+  }  
   if (sentToGuess.textContent === '') {
     checkBtn.classList.remove('none');
     dontKnowBtn.classList.add('none');
@@ -330,11 +401,113 @@ results.addEventListener('drop', (e) => {
 results.addEventListener('dragover', allowDrop);
 results.addEventListener('dragstart', drag);
 
-
 window.addEventListener('DOMContentLoaded', () => {
-  startNewGame(1, 1);
+  if (localStorage.getItem('id') && localStorage.getItem('token')) {
+    startNewGame(0, 0);
+  } else {
+    document.querySelector('.login-window').classList.remove('none');
+  }
 });
 
+const sendStatistics = async (stats) => {
+  try {
+    const userId = localStorage.getItem('id');
+    const url = `${baseUrl}/users/${userId}/statistics`;
+    const token = localStorage.getItem('token');
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(stats)
+    })
+    if (!response.ok) {
+      throw new Error(response.statusText)
+    }
+  } catch (err) {
+    console.log(err.message);
+  }
+}
+
+const createUser = async (user) => {
+  let url = `${baseUrl}/users`;
+  try {
+    const rawResponse = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(user)
+    });
+
+    if (!rawResponse.ok) {
+      throw new Error(rawResponse.statusText)
+    } else {
+      const result = await rawResponse.json();
+      return result;
+    }
+  } catch (err) {
+    console.log(err.message);
+  }
+};
+
+const loginUser = async (user) => {
+  let url = `${baseUrl}/signin`;
+  try {
+    const rawResponse = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(user)
+    });
+    if (!rawResponse.ok) {
+      throw new Error(rawResponse.statusText)
+    } else {
+      const result = await rawResponse.json();
+      return result;
+    }
+  } catch (err) {
+    console.log(err.message);
+  }
+};
+
+const updateToken = async () => {
+  try {
+    let email = localStorage.getItem(email);
+    let password = localStorage.getItem(password);
+    const { token } = await loginUser({ email, password })
+    localStorage.setItem('token', token);
+  } catch (err) {
+    console.log(err.message);
+  }
+}
+
+const updateTokenValidTime = () => {
+  let tokenValidTime = new Date();
+  tokenValidTime.setHours(tokenValidTime.getHours() + tokenValidHours);
+  localStorage.setItem('tokenValidTime', tokenValidTime);
+}
+
+loginBtn.addEventListener('click', async (event) => {
+  event.preventDefault();
+  user.email = document.querySelector('#input-email').value;
+  user.password = document.querySelector('#input-password').value;
+  // (?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[+\-_@$!%*?&#.,;:[\]{}]).{8,}
+  const { id } = await createUser(user);
+  const { token } = await loginUser(user);
+  updateTokenValidTime();
+  localStorage.setItem('id', id);
+  localStorage.setItem('token', token);
+  localStorage.setItem('email', user.email);
+  localStorage.setItem('password', user.password);
+  document.querySelector('.login-window').classList.add('none');
+  startNewGame(0, 0);
+})
 
 // TO-DO
 
@@ -351,3 +524,4 @@ window.addEventListener('DOMContentLoaded', () => {
 // при клике на слово из нижнего блока оно последовательно перемещается наверх.
 
 // Винсент Ван Гог – Красные виноградники в Арле, 1888.
+
