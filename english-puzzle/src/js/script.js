@@ -495,6 +495,7 @@ const updateTokenValidTime = () => {
 
 loginBtn.addEventListener('click', async (event) => {
   event.preventDefault();
+  let user = {};
   user.email = document.querySelector('#input-email').value;
   user.password = document.querySelector('#input-password').value;
   // (?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[+\-_@$!%*?&#.,;:[\]{}]).{8,}
