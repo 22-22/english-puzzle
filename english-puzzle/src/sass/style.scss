@@ -34,6 +34,22 @@ body {
     background-size: cover;
 }
 
+.info {
+    font-size: 14px;
+    color: red;
+    z-index: 5;
+    max-width: 900px;
+}
+
+.login-info {
+    margin-top: 10px;
+    font-size: 14px;
+    color: navy;
+    z-index: 5;
+    max-width: 900px;
+    text-align: center;
+}
+
 .start {
     position: absolute;
     background-image: url("../assets/start.jpg");
@@ -189,7 +205,6 @@ input {
     background-color: white;
     border-radius: 10px;
     margin: auto;
-    // transform: translate(0, 10%);
 }
 
 .picture-mini {

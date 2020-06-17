@@ -24,6 +24,7 @@ const loginBtn = document.querySelector('.login-btn');
 const results = document.querySelector('.results-sentences');
 const sentToGuess = document.querySelector('.sentence-to-guess');
 const form = document.querySelector('.inputs');
+const info = document.querySelector('.info');
 class Game {
   constructor(round, level) {
     this.round = round;
@@ -81,6 +82,7 @@ const startNewGame = async (round, level) => {
   document.querySelector('.success-items').innerHTML = '';
   document.querySelector('.error-items').innerHTML = '';
   results.innerHTML = '';
+  info.textContent = '';
 
   document.querySelector('.form__round').value = round + 1;
   document.querySelector('.form__level').value = level + 1;
@@ -89,6 +91,7 @@ const startNewGame = async (round, level) => {
   continueBtn.classList.add('none');
   dontKnowBtn.classList.remove('none');
   results.classList.remove('final-image');
+  autoSpeechBtn.classList.remove('inactive');
 
   const page = countPage(round);
   const dataForGame = await getWords(page, level);
@@ -213,7 +216,7 @@ const showResults = () => {
 };
 
 const goToNextGame = () => {
-  if (game.round < 50) {
+  if (game.round < 60) {
     let { level } = game;
     let round = parseInt(game.round, 10) + 1;
     game = new Game(round, level);
@@ -224,7 +227,7 @@ const goToNextGame = () => {
     game = new Game(round, level);
     startNewGame(round, level);
   } else {
-    console.log('Please choose any level from 1 to 6 and any round from 1 to 50');
+    info.textContent = 'Please choose any level from 1 to 6 and any round from 1 to 60';
   }
 };
 
@@ -256,17 +259,8 @@ continueBtn.addEventListener('click', () => {
     results.innerHTML = '';
     results.classList.add('final-image');
     document.querySelector('.translation').innerHTML = '';
-   // checkTokenTime();
-    let stats = {
-      "optional": {}
-    };
-    stats.optional.date = new Date();
-    stats.optional.iKnow = game.correctGuess.length;
-    stats.optional.iDontKnow = game.dontKnow.length;
-    stats.optional.level = game.level;
-    stats.optional.round = game.round;
-
-    sendStatistics(stats);
+    checkTokenTime();
+    updateStatistics();
   } else {
     goToNextGame();
   }
@@ -277,6 +271,7 @@ const getStatistics = async () => {
     const userId = localStorage.getItem('id');
     const url = `${baseUrl}/users/${userId}/statistics`;
     const token = localStorage.getItem('token');
+    console.log(userId, token)
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -287,23 +282,44 @@ const getStatistics = async () => {
     const result = await response.json();
     return result;
   } catch (err) {
-    console.log(err.message);
+    info.textContent = err.message;
   }
 }
 
+const updateStatistics = () => {
+  getStatistics()
+      .then(result => {
+        if (!result) {
+          let stats = {
+            "optional": {}
+          };
+          stats.optional.game1 = `${new Date().toLocaleString()}, level ${game.level}, round ${game.round} –` +
+            `I know ${game.correctGuess.length}, I don't know ${game.dontKnow.length}`;
+          sendStatistics(stats);
+        } else {
+          let gameIdx = Object.keys(result.optional).length + 1;
+          result.optional[`game${gameIdx}`] = `${new Date().toLocaleString()}, level ${game.level}, round ${game.round} –` +
+            `I know ${game.correctGuess.length}, I don't know ${game.dontKnow.length}`;
+          delete result.id;
+          sendStatistics(result);
+        }
+      })
+}
+
 const renderStatistics = (data) => {
+  console.log(data)
   document.querySelector('.stats').classList.remove('none');
-  let statsInfo = document.createElement('p');
-  let humanDate = new Date(data.date).toLocaleString();
-  statsInfo.textContent
-    = `${humanDate}, level: ${data.level}, round: ${data.round} – I know: ${data.iKnow}, I don't know: ${data.iDontKnow}.`;
-  document.querySelector('.stats-container').append(statsInfo);
+  Object.values(data.optional).forEach((game) => {
+    let statsInfo = document.createElement('p');
+    statsInfo.textContent = game;
+    document.querySelector('.stats-container').append(statsInfo);
+  })
 }
 
 const showStatistics = () => {
-  //checkTokenTime();
+  checkTokenTime();
   getStatistics()
-    .then(result => renderStatistics(result.optional));
+    .then(result => renderStatistics(result));
 }
 
 continueAfterResultsBtn.addEventListener('click', () => {
@@ -363,10 +379,14 @@ autoSpeechBtn.addEventListener('click', toggleAutoSpeech);
 
 formBtn.addEventListener('click', (event) => {
   event.preventDefault();
-  const round = document.querySelector('.form__round').value - 1;
-  const level = document.querySelector('.form__level').value - 1;
-  game = new Game(round, level);
-  startNewGame(round, level);
+  let round = document.querySelector('.form__round').value - 1;
+  let level = document.querySelector('.form__level').value - 1;
+  if (round > 60 && level > 6) {
+    info.textContent = 'Please choose any level from 1 to 6 and any round from 1 to 60';
+  } else {
+    game = new Game(round, level);
+    startNewGame(round, level);
+  }
 });
 
 // drag and drop
@@ -392,7 +412,7 @@ sentToGuess.addEventListener('dragstart', drag);
 results.addEventListener('drop', (e) => {
   if (e.target.classList.contains('results__word-block')) {
     drop(e);
-  }  
+  }
   if (sentToGuess.textContent === '') {
     checkBtn.classList.remove('none');
     dontKnowBtn.classList.add('none');
@@ -400,14 +420,6 @@ results.addEventListener('drop', (e) => {
 });
 results.addEventListener('dragover', allowDrop);
 results.addEventListener('dragstart', drag);
-
-window.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('id') && localStorage.getItem('token')) {
-    startNewGame(0, 0);
-  } else {
-    document.querySelector('.login-window').classList.remove('none');
-  }
-});
 
 const sendStatistics = async (stats) => {
   try {
@@ -427,7 +439,7 @@ const sendStatistics = async (stats) => {
       throw new Error(response.statusText)
     }
   } catch (err) {
-    console.log(err.message);
+    info.textContent = err.message;
   }
 }
 
@@ -450,7 +462,7 @@ const createUser = async (user) => {
       return result;
     }
   } catch (err) {
-    console.log(err.message);
+    info.textContent = err.message;
   }
 };
 
@@ -472,7 +484,7 @@ const loginUser = async (user) => {
       return result;
     }
   } catch (err) {
-    console.log(err.message);
+    info.textContent = err.message;
   }
 };
 
@@ -483,7 +495,7 @@ const updateToken = async () => {
     const { token } = await loginUser({ email, password })
     localStorage.setItem('token', token);
   } catch (err) {
-    console.log(err.message);
+    info.textContent = err.message;
   }
 }
 
@@ -493,36 +505,35 @@ const updateTokenValidTime = () => {
   localStorage.setItem('tokenValidTime', tokenValidTime);
 }
 
+const validatePass = (pass) => {
+  const regexp = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[+\-_@$!%*?&#.,;:[\]{}]).{8,}/;
+  return regexp.test(pass);
+}
+
 loginBtn.addEventListener('click', async (event) => {
   event.preventDefault();
   let user = {};
   user.email = document.querySelector('#input-email').value;
   user.password = document.querySelector('#input-password').value;
-  // (?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[+\-_@$!%*?&#.,;:[\]{}]).{8,}
-  const { id } = await createUser(user);
-  const { token } = await loginUser(user);
-  updateTokenValidTime();
-  localStorage.setItem('id', id);
-  localStorage.setItem('token', token);
-  localStorage.setItem('email', user.email);
-  localStorage.setItem('password', user.password);
-  document.querySelector('.login-window').classList.add('none');
-  startNewGame(0, 0);
+  if (validatePass(user.password)) {
+    const { id } = await createUser(user);
+    const { token } = await loginUser(user);
+    updateTokenValidTime();
+    localStorage.setItem('id', id);
+    localStorage.setItem('token', token);
+    localStorage.setItem('email', user.email);
+    localStorage.setItem('password', user.password);
+    document.querySelector('.login-window').classList.add('none');
+    startNewGame(0, 0);
+  }
+  
 })
 
-// TO-DO
 
-
-// как составить текцщей объект игры? какая инф там должна быть и как ее представить? ?????????7
-// нужные данные из прилетевших (предложение с произношением слова) + номер предложения
-
-// высчитать page, зафетчить данные
-// отфильтровать (из 20 объектов оставить 10), забрать нужные поля
-// (например, строку textExample + возможно засетить что-то в дата-атрибуты), разбить на массив
-// создать элементы (span?), засетать слова в textContent
-// и вывести разбитое по словам предложение в блок нижний блок sentence-curr
-// создать новые элементы в блоке результатов по количеству слов отгадываемого предложения
-// при клике на слово из нижнего блока оно последовательно перемещается наверх.
-
-// Винсент Ван Гог – Красные виноградники в Арле, 1888.
-
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('id') && localStorage.getItem('token')) {
+    startNewGame(0, 0);
+  } else {
+    document.querySelector('.login-window').classList.remove('none');
+  }
+});

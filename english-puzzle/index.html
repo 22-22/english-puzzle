@@ -9,6 +9,9 @@
 
 <body>
     <div class="login-window none">
+        <div class="login-info">The password should contain at least 8 characters, at least 1 digit, 1 uppercase 
+            and 1 lowercase letters and 1 of the following symbols +-_@$!%*?&#.,;:[]{}
+        </div>
         <form class="login">
             <input id="input-email" type="text" placeholder="Email" required autocomplete="off" >
             <input id="input-password" type="password" placeholder="Password" required autocomplete="off">
@@ -28,6 +31,7 @@
             <input class="form__round" type="text" autocomplete="off" placeholder="round">
             <button class="btn form__btn">go!</button>
         </form>
+        <div class="info" ></div>
         <div class="hints">
             <button class="btn hints__sentence">
                 <span class="tooltiptext">Listen to the sentence</span>
@@ -83,8 +87,8 @@
             </div>
         </div>
         <div class="stats none">
-            <div class="stats-container"></div>
             <button id="stats-continue-btn" class="btn">Continue</button>
+            <div class="stats-container"></div>
         </div>
     </main>
 </body>
