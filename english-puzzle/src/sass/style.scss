@@ -42,12 +42,16 @@ body {
 }
 
 .login-info {
-    margin-top: 10px;
     font-size: 14px;
     color: navy;
     z-index: 5;
-    max-width: 900px;
     text-align: center;
+    margin: 20px 0 0 80px;
+}
+
+.log-out {
+    z-index: 10;
+    position: fixed;
 }
 
 .start {
@@ -81,8 +85,12 @@ body {
     margin: 0 20px;
 }
 
+form {
+    margin-left: 100px;
+}
+
 input {
-    width: 50px;
+    width: 40px;
 }
 
 .hints {
@@ -183,7 +191,8 @@ input {
 
 /*****************STATS*******************/
 
-.results, .stats {
+.results,
+.stats {
     position: absolute;
     top: 0;
     background-image: url("../assets/start.jpg");
@@ -196,7 +205,8 @@ input {
     text-align: center;
 }
 
-.results-container, .stats-container {
+.results-container,
+.stats-container {
     @include flex();
     flex-direction: column;
     width: 100%;

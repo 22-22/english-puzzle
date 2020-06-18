@@ -1,8 +1,3 @@
-// choose group (0 - 5) === level (1 - 6)
-// choose page (0 - 29) === round (1 - 60)
-// round even (0) => 1st half of the server response
-// round odd (1) => 2nd half
-
 const baseUrl = 'https://afternoon-falls-25894.herokuapp.com';
 const tokenValidHours = 4;
 
@@ -21,6 +16,7 @@ const startBtn = document.querySelector('.start__btn');
 const resultsBtn = document.querySelector('.results-btn');
 const statsBtn = document.querySelector('.stats-btn');
 const loginBtn = document.querySelector('.login-btn');
+const logoutBtn = document.querySelector('.log-out');
 const results = document.querySelector('.results-sentences');
 const sentToGuess = document.querySelector('.sentence-to-guess');
 const form = document.querySelector('.inputs');
@@ -131,13 +127,12 @@ function guessWordOrder(e) {
   }
 }
 
-const showImages = () => {
-  const sentResultCurr = results.children[game.sentCurr];
-  // const blockHeight = 50;
+function showImages (block, identificator) {
   const blockHeight = 88;
   const topVal = 0 + blockHeight * game.sentCurr;
   let leftVal = 0;
-  sentResultCurr.querySelectorAll('.results__word-block').forEach((word) => {
+  block.querySelectorAll(identificator).forEach((word) => {
+
     word.style.background = "linear-gradient(rgba(255, 255, 255, 0.4) 100%, rgba(0, 0, 0, 0.3) 0%), url('./assets/picture.png'), no-repeat";
     word.style.backgroundPosition = `top -${topVal}px left -${leftVal}px`;
     leftVal += word.offsetWidth;
@@ -152,7 +147,9 @@ function checkIfGuessedCorrectly(correctWords, sentArr) {
     if (game.autoSpeech) {
       saySentence();
     }
-    showImages();
+    const sentResultCurr = results.children[game.sentCurr];
+    const identificator = '.results__word-block';
+    showImages(sentResultCurr, identificator);
     showTranslation();
   } else {
     dontKnowBtn.classList.remove('none');
@@ -236,7 +233,7 @@ const toggleAutoSpeech = () => {
   autoSpeechBtn.classList.toggle('inactive');
 }
 
-const checkTokenTime = () => {
+const handleTokenTime = () => {
   let dateNow = new Date();
   let tokenValidTime = new Date(localStorage.getItem('tokenValidTime'));
   if (dateNow.getTime() > tokenValidTime.getTime()) {
@@ -259,7 +256,7 @@ continueBtn.addEventListener('click', () => {
     results.innerHTML = '';
     results.classList.add('final-image');
     document.querySelector('.translation').innerHTML = '';
-    checkTokenTime();
+    handleTokenTime();
     updateStatistics();
   } else {
     goToNextGame();
@@ -271,7 +268,6 @@ const getStatistics = async () => {
     const userId = localStorage.getItem('id');
     const url = `${baseUrl}/users/${userId}/statistics`;
     const token = localStorage.getItem('token');
-    console.log(userId, token)
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -288,22 +284,22 @@ const getStatistics = async () => {
 
 const updateStatistics = () => {
   getStatistics()
-      .then(result => {
-        if (!result) {
-          let stats = {
-            "optional": {}
-          };
-          stats.optional.game1 = `${new Date().toLocaleString()}, level ${game.level}, round ${game.round} –` +
-            `I know ${game.correctGuess.length}, I don't know ${game.dontKnow.length}`;
-          sendStatistics(stats);
-        } else {
-          let gameIdx = Object.keys(result.optional).length + 1;
-          result.optional[`game${gameIdx}`] = `${new Date().toLocaleString()}, level ${game.level}, round ${game.round} –` +
-            `I know ${game.correctGuess.length}, I don't know ${game.dontKnow.length}`;
-          delete result.id;
-          sendStatistics(result);
-        }
-      })
+    .then(result => {
+      if (!result) {
+        let stats = {
+          "optional": {}
+        };
+        stats.optional.game1 = `${new Date().toLocaleString()}, level ${game.level}, round ${game.round} –` +
+          `I know ${game.correctGuess.length}, I don't know ${game.dontKnow.length}`;
+        sendStatistics(stats);
+      } else {
+        let gameIdx = Object.keys(result.optional).length + 1;
+        result.optional[`game${gameIdx}`] = `${new Date().toLocaleString()}, level ${game.level}, round ${game.round} –` +
+          `I know ${game.correctGuess.length}, I don't know ${game.dontKnow.length}`;
+        delete result.id;
+        sendStatistics(result);
+      }
+    })
 }
 
 const renderStatistics = (data) => {
@@ -317,7 +313,7 @@ const renderStatistics = (data) => {
 }
 
 const showStatistics = () => {
-  checkTokenTime();
+  handleTokenTime();
   getStatistics()
     .then(result => renderStatistics(result));
 }
@@ -340,7 +336,9 @@ statsBtn.addEventListener('click', showStatistics);
 dontKnowBtn.addEventListener('click', () => {
   showCorrectSentence();
   showTranslation();
-  showImages();
+  const sentResultCurr = results.children[game.sentCurr];
+  const identificator = '.results__word-block';
+  showImages(sentResultCurr, identificator);
   if (game.autoSpeech) {
     saySentence();
   }
@@ -373,7 +371,10 @@ sentenceAudioBtn.addEventListener('click', saySentence);
 
 translationBtn.addEventListener('click', showTranslation);
 
-imageBtn.addEventListener('click', showImages);
+imageBtn.addEventListener('click', () => {
+  const identificator = '.guess__word-block';
+  showImages(sentToGuess, identificator);
+});
 
 autoSpeechBtn.addEventListener('click', toggleAutoSpeech);
 
@@ -526,9 +527,36 @@ loginBtn.addEventListener('click', async (event) => {
     document.querySelector('.login-window').classList.add('none');
     startNewGame(0, 0);
   }
-  
 })
 
+const logoutUser = async () => {
+  let id = localStorage.getItem('id');
+  let token = localStorage.getItem('token');
+  let url = `${baseUrl}/users/${id}`;
+  try {
+    const rawResponse = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': '*/*',
+      },
+    });
+    if (!rawResponse.ok) {
+      throw new Error(rawResponse.statusText)
+    } else {
+      document.querySelector('.login-window').classList.remove('none');
+      localStorage.removeItem('token');
+      localStorage.removeItem('tokenValidTime');
+      localStorage.removeItem('email');
+      localStorage.removeItem('password');
+      localStorage.removeItem('id');
+    }
+  } catch (err) {
+    info.textContent = err.message;
+  }
+};
+
+logoutBtn.addEventListener('click', logoutUser);
 
 window.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('id') && localStorage.getItem('token')) {
